@@ -1,0 +1,132 @@
+{
+    "name": "coc-java-explorer",
+    "description": "coc.nvim extension project manager for java",
+    "version": "0.1.0",
+    "main": "lib/index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/asmodeus812/coc-java-explorer"
+    },
+    "scripts": {
+        "watch": "node esbuild.mjs --watch",
+        "build": "node esbuild.mjs",
+        "prepare": "node esbuild.mjs"
+    },
+    "keywords": [
+        "coc.nvim"
+    ],
+    "engines": {
+        "coc": "^0.0.82"
+    },
+    "capabilities": {
+        "virtualWorkspaces": false,
+        "untrustedWorkspaces": {
+            "supported": false
+        }
+    },
+    "activationEvents": [
+        "onLanguage:java",
+        "workspaceContains:pom.xml",
+        "workspaceContains:*/pom.xml",
+        "workspaceContains:build.gradle",
+        "workspaceContains:*/build.gradle",
+        "workspaceContains:settings.gradle",
+        "workspaceContains:*/settings.gradle",
+        "workspaceContains:build.gradle.kts",
+        "workspaceContains:*/build.gradle.kts",
+        "workspaceContains:settings.gradle.kts",
+        "workspaceContains:*/settings.gradle.kts",
+        "workspaceContains:.classpath",
+        "workspaceContains:*/.classpath"
+    ],
+    "devDependencies": {
+        "coc.nvim": "^0.0.83-next.18",
+        "copy-webpack-plugin": "^11.0.0",
+        "esbuild": "^0.15.13",
+        "glob": "^7.2.3",
+        "mocha": "^9.2.2",
+        "ts-loader": "^9.4.2",
+        "tslint": "^6.1.3",
+        "typescript": "^4.9.4",
+        "vscode-languageserver-protocol": "^3.17.2",
+        "webpack": "^5.76.0",
+        "webpack-cli": "^4.10.0"
+    },
+    "dependencies": {
+        "await-lock": "^2.2.2",
+        "development": "^0.0.6",
+        "fmtr": "^1.1.4",
+        "fs-extra": "^10.1.0",
+        "globby": "^13.1.3",
+        "lodash": "^4.17.21",
+        "minimatch": "^5.1.6",
+        "semver": "^7.3.8"
+    },
+    "license": "MIT",
+    "contributes": {
+        "javaExtensions": [
+            "./server/com.microsoft.jdtls.ext.core-0.23.6.jar"
+        ],
+        "commands": [
+            {
+                "command": "java.view.package.revealProject",
+                "title": "Reveal project in project view explorer"
+            },
+            {
+                "command": "java.view.package.refresh",
+                "title": "Refresh project & packages in view explorer"
+            },
+            {
+                "command": "java.view.package.changeToHierarchicalPackageView",
+                "title": "Show package project view as hierarchical view"
+            },
+            {
+                "command": "java.view.package.changeToFlatPackageView",
+                "title": "Show package project view as flat view"
+            },
+            {
+                "command": "java.view.explorer.showNonJavaResources",
+                "title": "Show non-java resources within project view"
+            },
+            {
+                "command": "java.view.explorer.hideNonJavaResources",
+                "title": "Hid non-java resources within project view"
+            }
+        ],
+        "configuration": {
+            "type": "object",
+            "title": "Java Project Manager",
+            "properties": {
+                "java.dependency.showMembers": {
+                    "type": "boolean",
+                    "description": "Show class members in the project explorer view when a class is expanded",
+                    "default": false
+                },
+                "java.dependency.autoRefresh": {
+                    "type": "boolean",
+                    "description": "Set to true to automatically refresh the tree view when changes to the classpath occur and the view is opened or visible",
+                    "default": true
+                },
+                "java.dependency.refreshDelay": {
+                    "type": "number",
+                    "description": "The debounce refresh delay after which detected changes to the class path will reflect and update the project view",
+                    "default": 2000
+                },
+                "java.dependency.packagePresentation": {
+                    "type": "string",
+                    "enum": [
+                        "flat",
+                        "hierarchical"
+                    ],
+                    "description": "Show the package view explorer in either a flat or hierarchical view model",
+                    "default": "flat"
+                },
+                "java.project.explorer.showNonJavaResources": {
+                    "type": "boolean",
+                    "description": "Show non java related file system resources such as folders or files",
+                    "default": false
+                }
+            }
+        }
+    }
+}
