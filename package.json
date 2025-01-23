@@ -65,7 +65,7 @@
     "license": "MIT",
     "contributes": {
         "javaExtensions": [
-            "./server/com.microsoft.jdtls.ext.core-0.23.6.jar"
+            "./server/com.microsoft.jdtls.ext.core"
         ],
         "commands": [
             {

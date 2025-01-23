@@ -12,5 +12,9 @@ cd .. || exit
 echo "Copying server artifacts"
 rm -rf ../server && cp -rf server ..
 
+cd .. || exit
+mv -f ./server/com.microsoft.jdtls.ext.core-*.jar \
+      ./server/com.microsoft.jdtls.ext.core
+
 echo "Cleaning resources"
-rm -rf ../vscode-java-dependency
+rm -rf ./vscode-java-dependency
