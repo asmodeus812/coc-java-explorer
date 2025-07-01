@@ -1,7 +1,7 @@
 {
     "name": "coc-java-explorer",
     "description": "coc.nvim extension project manager for java",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "main": "lib/index.js",
     "repository": {
         "type": "git",
