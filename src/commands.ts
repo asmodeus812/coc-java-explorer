@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+import { commands } from "coc.nvim";
 
 export namespace Commands {
+    /**
+     * Execute Workspace Command
+     */
     export const EXECUTE_WORKSPACE_COMMAND = "java.execute.workspaceCommand";
 
     export const VIEW_PACKAGE_CHANGETOFLATPACKAGEVIEW = "java.view.package.changeToFlatPackageView";
@@ -12,9 +16,9 @@ export namespace Commands {
 
     export const VIEW_PACKAGE_UNLINKWITHFOLDER = "java.view.package.unlinkWithFolderExplorer";
 
-    export const JAVA_PROJECT_EXPLORER_SHOW_NONJAVA_RESOURCES = "java.view.explorer.showNonJavaResources";
+    export const JAVA_PROJECT_EXPLORER_SHOW_NONJAVA_RESOURCES = "java.project.explorer.showNonJavaResources";
 
-    export const JAVA_PROJECT_EXPLORER_HIDE_NONJAVA_RESOURCES = "java.view.explorer.hideNonJavaResources";
+    export const JAVA_PROJECT_EXPLORER_HIDE_NONJAVA_RESOURCES = "java.project.explorer.hideNonJavaResources";
 
     export const JAVA_PROJECT_EXPLORER_RESOURCE_OPEN = "java.view.explorer.openResourceNode"
 
@@ -38,6 +42,8 @@ export namespace Commands {
 
     export const VIEW_PACKAGE_NEW_JAVA_CLASS = "java.view.package.newJavaClass";
 
+    export const VIEW_MODERNIZE_JAVA_PROJECT = "_java.view.modernizeJavaProject";
+
     export const VIEW_PACKAGE_NEW_JAVA_INTERFACE = "java.view.package.newJavaInterface";
 
     export const VIEW_PACKAGE_NEW_JAVA_ENUM = "java.view.package.newJavaEnum";
@@ -50,13 +56,15 @@ export namespace Commands {
 
     export const VIEW_PACKAGE_NEW_JAVA_PACKAGE = "java.view.package.newPackage";
 
+    export const VIEW_EXPLORER_NEW_PACKAGE = "java.view.fileExplorer.newPackage";
+
     export const VIEW_PACKAGE_RENAME_FILE = "java.view.package.renameFile";
 
     export const VIEW_PACKAGE_MOVE_FILE_TO_TRASH = "java.view.package.moveFileToTrash";
 
     export const VIEW_PACKAGE_DELETE_FILE_PERMANENTLY = "java.view.package.deleteFilePermanently";
 
-    export const VIEW_PACKAGE_REVEAL_IN_PROJECT_EXPLORER = "java.view.package.revealProject";
+    export const VIEW_PACKAGE_REVEAL_IN_PROJECT_EXPLORER = "java.view.package.revealInProjectExplorer";
 
     export const VIEW_PACKAGE_NEW_FILE = "java.view.package.newFile";
 
@@ -116,6 +124,8 @@ export namespace Commands {
 
     export const JAVA_PROJECT_CONFIGURATION_UPDATE = "java.projectConfiguration.update";
 
+    export const JAVA_RESOLVE_BUILD_FILES = "vscode.java.resolveBuildFiles";
+
     export const JAVA_PROJECT_LIST_SOURCE_PATHS = "java.project.listSourcePaths";
 
     export const INSTALL_EXTENSION = "java.project.installExtension";
@@ -123,6 +133,13 @@ export namespace Commands {
     export const JAVA_UPDATE_DEPRECATED_TASK = "java.updateDeprecatedTask";
 
     export const JAVA_PROJECT_CHECK_IMPORT_STATUS = "java.project.checkImportStatus";
+
+    export const JAVA_UPGRADE_WITH_COPILOT = "_java.upgradeWithCopilot";
+
+    /**
+     * Commands from Visual Studio Code
+     */
+    export const VSCODE_OPEN_FOLDER = "vscode.openFolder";
 
     export const VSCODE_OPEN = "vscode.open";
 
@@ -132,6 +149,9 @@ export namespace Commands {
 
     export const WORKBENCH_VIEW_PROBLEMS = "workbench.actions.view.problems";
 
+    /**
+     * Commands from JLS
+     */
     export const LIST_SOURCEPATHS = "java.project.listSourcePaths";
 
     export const COMPILE_WORKSPACE = "java.workspace.compile";
@@ -140,5 +160,22 @@ export namespace Commands {
 
     export const BUILD_PROJECT = "java.project.build";
 
-    export const GET_PROJECT_SETTINGS = 'java.project.getSettings';
+    /**
+     * Commands from Java Upgrade Tool
+     */
+    export const GOTO_AGENT_MODE = "javaupgrade.gotoAgentMode";
+
+    /**
+     * Get the project settings
+     */
+    export const GET_PROJECT_SETTINGS = "java.project.getSettings";
+}
+
+export function executeJavaLanguageServerCommand(...rest: any[]) {
+    return executeJavaExtensionCommand(Commands.EXECUTE_WORKSPACE_COMMAND, ...rest);
+}
+
+export async function executeJavaExtensionCommand(commandName: string, ...rest: any[]) {
+    // TODO: need to handle error
+    return commands.executeCommand(commandName, ...rest);
 }

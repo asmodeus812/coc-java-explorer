@@ -1,12 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {Uri, workspace} from "coc.nvim";
-import {INodeData} from "./java/nodeData";
-import {languageServerApiManager} from "./languageServerApi/languageServerApiManager";
+import { Uri, window, workspace, WorkspaceFolder } from "coc.nvim";
+import { INodeData } from "./java/nodeData";
+import { languageServerApiManager } from "./languageServerApi/languageServerApiManager";
 
 export class Utility {
-
     public static async isRevealable(uri: Uri): Promise<boolean> {
         if (!SUPPORTED_URI_SCHEMES.includes(uri.scheme)) {
             return false;
@@ -17,10 +16,24 @@ export class Utility {
 
         return languageServerApiManager.ready();
     }
+
+    public static getDefaultWorkspaceFolder(): WorkspaceFolder | undefined {
+        if (workspace.workspaceFolders === undefined) {
+            return undefined;
+        }
+        if (workspace.workspaceFolders.length === 1) {
+            return workspace.workspaceFolders[0];
+        }
+        if (window.activeTextEditor) {
+            const activeWorkspaceFolder: WorkspaceFolder | undefined = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
+            return activeWorkspaceFolder;
+        }
+        return undefined;
+    }
 }
 
 export class EventCounter {
-    public static dict: {[key: string]: number} = {};
+    public static dict: { [key: string]: number } = {};
 
     public static increase(event: string) {
         const count = this.dict[event] ?? 0;
@@ -55,14 +68,63 @@ export enum Type {
     EXCEPTION = "exception",
     USAGEDATA = "usageData",
     USAGEERROR = "usageError",
-    ACTIVATEEXTENSION = "activateExtension", // TODO: Activation belongs to usage data, remove this category.
+    ACTIVATEEXTENSION = "activateExtension" // TODO: Activation belongs to usage data, remove this category.
 }
 
 const keywords: Set<string> = new Set([
-    "abstract", "default", "if", "private", "this", "boolean", "do", "implements", "protected", "throw", "break", "double", "import",
-    "public", "throws", "byte", "else", "instanceof", "return", "transient", "case", "extends", "int", "short", "try", "catch", "final",
-    "interface", "static", "void", "char", "finally", "long", "strictfp", "volatile", "class", "float", "native", "super", "while",
-    "const", "for", "new", "switch", "continue", "goto", "package", "synchronized", "true", "false", "null", "assert", "enum",
+    "abstract",
+    "default",
+    "if",
+    "private",
+    "this",
+    "boolean",
+    "do",
+    "implements",
+    "protected",
+    "throw",
+    "break",
+    "double",
+    "import",
+    "public",
+    "throws",
+    "byte",
+    "else",
+    "instanceof",
+    "return",
+    "transient",
+    "case",
+    "extends",
+    "int",
+    "short",
+    "try",
+    "catch",
+    "final",
+    "interface",
+    "static",
+    "void",
+    "char",
+    "finally",
+    "long",
+    "strictfp",
+    "volatile",
+    "class",
+    "float",
+    "native",
+    "super",
+    "while",
+    "const",
+    "for",
+    "new",
+    "switch",
+    "continue",
+    "goto",
+    "package",
+    "synchronized",
+    "true",
+    "false",
+    "null",
+    "assert",
+    "enum"
 ]);
 
 const SUPPORTED_URI_SCHEMES: string[] = ["file", "jdt"];

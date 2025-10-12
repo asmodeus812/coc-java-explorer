@@ -2,23 +2,27 @@
 // Licensed under the MIT license.
 
 import * as minimatch from "minimatch";
-import {Uri, commands, workspace} from "coc.nvim";
-import {Commands} from "../commands";
-import {INodeData, NodeKind} from "./nodeData";
-import {Settings} from "../settings";
+import { CancellationToken, Uri, commands, workspace } from "coc.nvim";
+import { Commands, executeJavaExtensionCommand } from "../commands";
+import { INodeData, NodeKind } from "./nodeData";
+import { Settings } from "../settings";
+import { IMainClassInfo } from "coc-java-explorer/src/tasks/buildArtifact/ResolveMainClassExecutor";
+import { IClasspath } from "coc-java-explorer/src/tasks/buildArtifact/IStepMetadata";
 
 export namespace Jdtls {
     export async function getProjects(params: string): Promise<INodeData[]> {
-        return await commands.executeCommand(
-            Commands.EXECUTE_WORKSPACE_COMMAND,
-            Commands.JAVA_PROJECT_LIST,
-            params,
-            !Settings.showNonJavaResources()
-        ) || [];
+        return (
+            (await commands.executeCommand(
+                Commands.EXECUTE_WORKSPACE_COMMAND,
+                Commands.JAVA_PROJECT_LIST,
+                params,
+                Settings.nonJavaResourcesFiltered()
+            )) || []
+        );
     }
 
     export async function getProjectUris(): Promise<string[]> {
-        return await commands.executeCommand(Commands.EXECUTE_WORKSPACE_COMMAND, Commands.GET_ALL_PROJECTS) || [];
+        return (await commands.executeCommand(Commands.EXECUTE_WORKSPACE_COMMAND, Commands.GET_ALL_PROJECTS)) || [];
     }
 
     export async function refreshLibraries(params: string): Promise<boolean | undefined> {
@@ -27,12 +31,13 @@ export namespace Jdtls {
 
     export async function getPackageData(params: IPackageDataParam): Promise<INodeData[]> {
         const uri: Uri | null = !params.projectUri ? null : Uri.parse(params.projectUri);
-        const excludePatterns: {[key: string]: boolean} | undefined = workspace.getConfiguration("files", uri).get("exclude");
+        const excludePatterns: { [key: string]: boolean } | undefined = workspace.getConfiguration("files", uri).get("exclude");
 
-        let nodeData: INodeData[] = await commands.executeCommand(Commands.EXECUTE_WORKSPACE_COMMAND,
-            Commands.JAVA_GETPACKAGEDATA, params) || [];
+        let nodeData: INodeData[] =
+            (await commands.executeCommand(Commands.EXECUTE_WORKSPACE_COMMAND, Commands.JAVA_GETPACKAGEDATA, params)) || [];
 
-        if (!Settings.showNonJavaResources()) {
+        // check filter settings.
+        if (Settings.nonJavaResourcesFiltered()) {
             nodeData = nodeData.filter((data: INodeData) => {
                 return data.kind !== NodeKind.Folder && data.kind !== NodeKind.File;
             });
@@ -61,18 +66,44 @@ export namespace Jdtls {
     }
 
     export async function resolvePath(params: string): Promise<INodeData[]> {
-        return await commands.executeCommand(Commands.EXECUTE_WORKSPACE_COMMAND, Commands.JAVA_RESOLVEPATH, params) ?? [];
+        return (await commands.executeCommand(Commands.EXECUTE_WORKSPACE_COMMAND, Commands.JAVA_RESOLVEPATH, params)) || [];
+    }
+
+    export async function getMainClasses(params: string): Promise<IMainClassInfo[]> {
+        return (await commands.executeCommand(Commands.EXECUTE_WORKSPACE_COMMAND, Commands.JAVA_PROJECT_GETMAINCLASSES, params)) || [];
+    }
+
+    export async function exportJar(
+        mainClass: string,
+        classpaths: IClasspath[],
+        destination: string,
+        terminalId: string,
+        token: CancellationToken
+    ): Promise<boolean | undefined> {
+        return commands.executeCommand(
+            Commands.EXECUTE_WORKSPACE_COMMAND,
+            Commands.JAVA_PROJECT_GENERATEJAR,
+            mainClass,
+            classpaths,
+            destination,
+            terminalId,
+            token
+        );
     }
 
     export async function checkImportStatus(): Promise<boolean> {
-        return commands.executeCommand(Commands.EXECUTE_WORKSPACE_COMMAND, Commands.JAVA_PROJECT_CHECK_IMPORT_STATUS) ?? false;
+        return commands.executeCommand(Commands.EXECUTE_WORKSPACE_COMMAND, Commands.JAVA_PROJECT_CHECK_IMPORT_STATUS) || false;
     }
 
     export enum CompileWorkspaceStatus {
         Failed = 0,
         Succeed = 1,
         Witherror = 2,
-        Cancelled = 3,
+        Cancelled = 3
+    }
+
+    export function resolveBuildFiles(): Promise<string[]> {
+        return <Promise<string[]>>executeJavaExtensionCommand(Commands.JAVA_RESOLVE_BUILD_FILES);
     }
 }
 

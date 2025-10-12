@@ -1,32 +1,29 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import { commands, Emitter, Event, ExtensionContext, ProviderResult, TreeDataProvider, TreeItem, window, workspace } from "coc.nvim";
 import * as _ from "lodash";
-import {
-    nvim, commands, Event, Emitter, ExtensionContext, ProviderResult,
-    RelativePattern, TreeDataProvider, TreeItem, Uri, window, workspace,
-} from "coc.nvim";
-import {Commands} from "../commands";
-import {Jdtls} from "../java/jdtls";
-import {INodeData, NodeKind} from "../java/nodeData";
-import {languageServerApiManager} from "../languageServerApi/languageServerApiManager";
-import {Settings} from "../settings";
-import {explorerLock} from "../utils/Lock";
-import {DataNode} from "./dataNode";
-import {ExplorerNode} from "./explorerNode";
-import {explorerNodeCache} from "./nodeCache/explorerNodeCache";
-import {ProjectNode} from "./projectNode";
-import {WorkspaceNode} from "./workspaceNode";
+import { Commands } from "../commands";
+import { Jdtls } from "../java/jdtls";
+import { INodeData, NodeKind } from "../java/nodeData";
+import { languageServerApiManager } from "../languageServerApi/languageServerApiManager";
+import { Settings } from "../settings";
+import { executeExportJarTask } from "../tasks/buildArtifact/BuildArtifactTaskProvider";
+import { explorerLock } from "../utils/Lock";
+import { DataNode } from "./dataNode";
+import { ExplorerNode } from "./explorerNode";
+import { explorerNodeCache } from "./nodeCache/explorerNodeCache";
+import { ProjectNode } from "./projectNode";
+import { WorkspaceNode } from "./workspaceNode";
 
 export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
-
     private _onDidChangeTreeData: Emitter<ExplorerNode | null | undefined> = new Emitter<ExplorerNode | null | undefined>();
 
     // tslint:disable-next-line:member-ordering
     public onDidChangeTreeData: Event<ExplorerNode | null | undefined> = this._onDidChangeTreeData.event;
 
     private _rootItems: ExplorerNode[] | undefined = undefined;
-    private _refreshDelayTrigger: _.DebouncedFunc<((element?: ExplorerNode) => void)>;
+    private _refreshDelayTrigger: _.DebouncedFunc<(element?: ExplorerNode) => void>;
     /**
      * The element which is pending to be refreshed.
      * `undefined` denotes to root node.
@@ -35,10 +32,21 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
     private pendingRefreshElement: ExplorerNode | undefined | null;
 
     constructor(public readonly context: ExtensionContext) {
-        context.subscriptions.push(commands.registerCommand(Commands.VIEW_PACKAGE_INTERNAL_REFRESH, (debounce?: boolean, element?: ExplorerNode) =>
-            this.refresh(debounce, element)));
-        context.subscriptions.push(commands.registerCommand(Commands.VIEW_PACKAGE_REFRESH, (debounce?: boolean, element?: ExplorerNode) =>
-            this.refresh(debounce, element)));
+        context.subscriptions.push(
+            commands.registerCommand(Commands.EXPORT_JAR_REPORT, (terminalId: string, message: string) => {
+                console.error(message);
+                window.showWarningMessage(message);
+            }),
+            commands.registerCommand(Commands.VIEW_PACKAGE_INTERNAL_REFRESH, (debounce?: boolean, element?: ExplorerNode) =>
+                this.refresh(debounce, element)
+            ),
+            commands.registerCommand(Commands.VIEW_PACKAGE_REFRESH, (debounce?: boolean, element?: ExplorerNode) =>
+                this.refresh(debounce, element)
+            ),
+            commands.registerCommand(Commands.VIEW_PACKAGE_EXPORT_JAR, async () => {
+                executeExportJarTask();
+            })
+        );
 
         this.setRefreshDebounceFunc();
     }
@@ -47,8 +55,7 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
         if (element === undefined || this.pendingRefreshElement === undefined) {
             this._refreshDelayTrigger(undefined);
             this.pendingRefreshElement = undefined;
-        } else if (this.pendingRefreshElement === null
-            || element.isItselfOrAncestorOf(this.pendingRefreshElement)) {
+        } else if (this.pendingRefreshElement === null || element.isItselfOrAncestorOf(this.pendingRefreshElement)) {
             this._refreshDelayTrigger(element);
             this.pendingRefreshElement = element;
         } else if (this.pendingRefreshElement.isItselfOrAncestorOf(element)) {
@@ -58,7 +65,8 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
             this._refreshDelayTrigger(element);
             this.pendingRefreshElement = element;
         }
-        if (!debounce) { // Immediately refresh
+        if (!debounce) {
+            // Immediately refresh
             this._refreshDelayTrigger.flush();
         }
     }
@@ -78,12 +86,11 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
     }
 
     public async getChildren(element?: ExplorerNode): Promise<ExplorerNode[] | undefined | null> {
-        if (!await languageServerApiManager.ready()) {
+        if (!(await languageServerApiManager.ready())) {
             return [];
         }
 
-        const children = (!this._rootItems || !element) ?
-            await this.getRootNodes() : await element.getChildren();
+        const children = !this._rootItems || !element ? await this.getRootNodes() : await element.getChildren();
 
         explorerNodeCache.saveNodes(children || []);
         return children;
@@ -96,8 +103,11 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
     public async revealPaths(paths: INodeData[]): Promise<DataNode | undefined> {
         const projectNodeData = paths.shift();
         const projects = await this.getRootProjects();
-        const project = projects ? <DataNode>projects.find((node: DataNode) =>
-            node.path === projectNodeData?.path && node.nodeData.name === projectNodeData?.name) : undefined;
+        const project = projects
+            ? <DataNode>(
+                  projects.find((node: DataNode) => node.path === projectNodeData?.path && node.nodeData.name === projectNodeData?.name)
+              )
+            : undefined;
         return project?.revealPaths(paths);
     }
 
@@ -143,11 +153,18 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
             const folders = workspace.workspaceFolders;
             if (folders?.length) {
                 if (folders.length > 1) {
-                    folders.forEach((folder) => rootItems.push(new WorkspaceNode({
-                        name: folder.name,
-                        uri: folder.uri.toString(),
-                        kind: NodeKind.Workspace,
-                    }, undefined)));
+                    folders.forEach((folder) =>
+                        rootItems.push(
+                            new WorkspaceNode(
+                                {
+                                    name: folder.name,
+                                    uri: folder.uri.toString(),
+                                    kind: NodeKind.Workspace
+                                },
+                                undefined
+                            )
+                        )
+                    );
                     this._rootItems = rootItems;
                 } else {
                     const result: INodeData[] = await Jdtls.getProjects(folders[0].uri.toString());

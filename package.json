@@ -1,7 +1,7 @@
 {
     "name": "coc-java-explorer",
     "description": "coc.nvim extension project manager for java",
-    "version": "0.1.9",
+    "version": "0.2.0",
     "main": "lib/index.js",
     "repository": {
         "type": "git",
@@ -69,28 +69,60 @@
         ],
         "commands": [
             {
-                "command": "java.view.package.revealProject",
-                "title": "Reveal project in project view explorer"
+                "command": "java.project.addLibraries",
+                "title": "Add jar libraries to project"
             },
             {
-                "command": "java.view.package.refresh",
-                "title": "Refresh project & packages in view explorer"
+                "command": "java.project.addLibraryFolders",
+                "title": "Add library folders to project"
             },
             {
-                "command": "java.view.package.changeToHierarchicalPackageView",
-                "title": "Show package project view as hierarchical view"
+                "command": "java.project.refreshLibraries",
+                "title": "Refresh project libraries"
+            },
+            {
+                "command": "java.project.create",
+                "title": "Create a new Java project"
+            },
+            {
+                "command": "java.view.package.linkWithFolder",
+                "title": "Link package view with folder"
+            },
+            {
+                "command": "java.view.package.unlinkWithFolder",
+                "title": "Unlink package view from folder"
             },
             {
                 "command": "java.view.package.changeToFlatPackageView",
-                "title": "Show package project view as flat view"
+                "title": "Show package view as flat view"
+            },
+            {
+                "command": "java.view.package.changeToHierarchicalPackageView",
+                "title": "Show package view as hierarchical view"
+            },
+            {
+                "command": "java.view.package.internalRefresh",
+                "title": "Internal refresh of package view"
+            },
+            {
+                "command": "java.view.package.refresh",
+                "title": "Refresh project & packages in view"
+            },
+            {
+                "command": "java.view.package.exportJar",
+                "title": "Export project jar file"
+            },
+            {
+                "command": "java.view.package.revealProject",
+                "title": "Reveal project in project view"
             },
             {
                 "command": "java.view.explorer.showNonJavaResources",
-                "title": "Show non-java resources within project view"
+                "title": "Show non-Java resources in view"
             },
             {
                 "command": "java.view.explorer.hideNonJavaResources",
-                "title": "Hid non-java resources within project view"
+                "title": "Hide non-Java resources in view"
             }
         ],
         "configuration": {
