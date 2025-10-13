@@ -137,17 +137,18 @@ async function promptUpdateExtension(projectType: string, metaData: IProjectType
 
 async function scaffoldSimpleProject(context: ExtensionContext): Promise<void> {
     const workspaceFolder = Utility.getDefaultWorkspaceFolder();
-    const location: string | undefined = await window.requestInput(
-        "Select the project location",
-        workspaceFolder && workspaceFolder.uri,
-        {}
-    );
-    if (!location || !location.length) {
+    const uri: Uri = Uri.parse(workspaceFolder?.uri);
+    const location: string | undefined = await window.requestInput("Select project location: ", uri.fsPath, {});
+
+    if (!location || !location.length || !(await fse.exists(location))) {
+        window.showErrorMessage("Invalid project location was provided");
         return;
     }
+
     const projectName: string | undefined = await window.requestInput("Enter Java project name: ");
 
     if (!projectName) {
+        window.showErrorMessage("Invalid project name was provided");
         return;
     }
 
@@ -157,18 +158,17 @@ async function scaffoldSimpleProject(context: ExtensionContext): Promise<void> {
         await fse.ensureDir(projectRoot);
         await fse.copy(templateRoot, projectRoot);
         await fse.ensureDir(path.join(projectRoot, "lib"));
+        window.showInformationMessage(`Created a new simple project at ${projectRoot}`);
     } catch (error) {
         window.showErrorMessage(error.message);
         return;
     }
-    const openInNewWindow = workspace && !_.isEmpty(workspace.workspaceFolders);
-    await commands.executeCommand(Commands.VSCODE_OPEN_FOLDER, Uri.file(path.join(location, projectName)), openInNewWindow);
+    await commands.executeCommand(Commands.VSCODE_OPEN, Uri.file(path.join(location, projectName)));
 }
 
 const projectTypes: IProjectType[] = [
     {
-        displayName: "No build tools",
-        detail: "Work with source code directly without any build tools",
+        displayName: "Simple",
         metadata: {
             type: ProjectType.NoBuildTool,
             extensionId: "",
@@ -178,10 +178,9 @@ const projectTypes: IProjectType[] = [
     },
     {
         displayName: "Maven",
-        description: "create from archetype",
         metadata: {
             type: ProjectType.Maven,
-            extensionId: "vscjava.vscode-maven",
+            extensionId: "coc-maven",
             extensionName: "Maven for Java",
             createCommandId: "maven.archetype.generate"
         }
@@ -190,7 +189,7 @@ const projectTypes: IProjectType[] = [
         displayName: "Gradle",
         metadata: {
             type: ProjectType.Gradle,
-            extensionId: "vscjava.vscode-gradle",
+            extensionId: "coc-gradle",
             extensionName: "Gradle for Java",
             leastExtensionVersion: "3.10.0",
             createCommandId: "gradle.createProject"
@@ -200,63 +199,9 @@ const projectTypes: IProjectType[] = [
         displayName: "Spring Boot",
         metadata: {
             type: ProjectType.SpringBoot,
-            extensionId: "vscjava.vscode-spring-initializr",
+            extensionId: "coc-spring-initializr",
             extensionName: "Spring Initializr Java Support",
             createCommandId: "spring.initializr.createProject"
-        }
-    },
-    {
-        displayName: "Quarkus",
-        metadata: {
-            type: ProjectType.Quarkus,
-            extensionId: "redhat.vscode-quarkus",
-            extensionName: "Quarkus",
-            createCommandId: "quarkusTools.createProject"
-        }
-    },
-    {
-        displayName: "MicroProfile",
-        metadata: {
-            type: ProjectType.MicroProfile,
-            extensionId: "microprofile-community.mp-starter-vscode-ext",
-            extensionName: "MicroProfile Starter",
-            createCommandId: "extension.microProfileStarter"
-        }
-    },
-    {
-        displayName: "JavaFX",
-        description: "create from archetype",
-        metadata: {
-            type: ProjectType.JavaFX,
-            extensionId: "vscjava.vscode-maven",
-            extensionName: "Maven for Java",
-            leastExtensionVersion: "0.35.0",
-            createCommandId: "maven.archetype.generate",
-            createCommandArgs: [
-                {
-                    archetypeGroupId: "org.openjfx",
-                    archetypeArtifactId: "javafx-archetype-fxml",
-                    archetypeVersion: "RELEASE"
-                }
-            ]
-        }
-    },
-    {
-        displayName: "Micronaut",
-        metadata: {
-            type: ProjectType.Micronaut,
-            extensionId: "oracle-labs-graalvm.micronaut",
-            extensionName: "Launch for Micronaut® framework",
-            createCommandId: "extension.micronaut.createProject"
-        }
-    },
-    {
-        displayName: "Graal Development Kit for Micronaut",
-        metadata: {
-            type: ProjectType.GDK,
-            extensionId: "oracle-labs-graalvm.gcn",
-            extensionName: "Graal Development Kit for Micronaut Launcher",
-            createCommandId: "gdk.createGdkProject"
         }
     }
 ];
