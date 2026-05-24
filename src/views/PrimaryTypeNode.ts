@@ -109,11 +109,11 @@ export class PrimaryTypeNode extends DataNode {
     }
 
     private getUnmanagedFolderAncestor(): ProjectNode | undefined {
-        let ancestor = this.getParent()
+        let ancestor: ExplorerNode | undefined = this.getParent()
         while (ancestor && !(ancestor instanceof ProjectNode)) {
             ancestor = ancestor.getParent()
         }
-        if (ancestor?.isUnmanagedFolder()) {
+        if (ancestor instanceof ProjectNode && ancestor.isUnmanagedFolder()) {
             return ancestor
         }
 

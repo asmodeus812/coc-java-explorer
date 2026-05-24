@@ -6,8 +6,8 @@ import { CancellationToken, Uri, commands, workspace } from "coc.nvim";
 import { Commands, executeJavaExtensionCommand } from "../commands";
 import { INodeData, NodeKind } from "./nodeData";
 import { Settings } from "../settings";
-import { IMainClassInfo } from "coc-java-explorer/src/tasks/buildArtifact/ResolveMainClassExecutor";
-import { IClasspath } from "coc-java-explorer/src/tasks/buildArtifact/IStepMetadata";
+import { IMainClassInfo } from "../tasks/buildArtifact/ResolveMainClassExecutor";
+import { IClasspath } from "../tasks/buildArtifact/IStepMetadata";
 
 export namespace Jdtls {
     export async function getProjects(params: string): Promise<INodeData[]> {

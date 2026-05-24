@@ -11,7 +11,7 @@ import { INodeData } from "../../java/nodeData";
 import { IExportJarStepExecutor } from "./IExportJarStepExecutor";
 import { IClasspath, IStepMetadata } from "./IStepMetadata";
 import { ExportJarMessages, ExportJarStep, toPosixPath } from "./BuildTaskHelperUtility";
-import { getJavaExtensionApi } from "coc-java-explorer/src/utils/Client";
+import { getJavaExtensionApi } from "../../utils/Client";
 
 export class GenerateJarExecutor implements IExportJarStepExecutor {
     private readonly currentStep: ExportJarStep = ExportJarStep.GenerateJar;

@@ -4,7 +4,7 @@
 import { commands, ConfigurationChangeEvent, ConfigurationTarget, ExtensionContext, workspace } from "coc.nvim";
 import { Commands } from "./commands";
 import { syncHandler } from "./syncHandler";
-import { DependencyExplorer } from "coc-java-explorer/src/views/dependencyExplorer";
+import { DependencyExplorer } from "./views/dependencyExplorer";
 
 export class Settings {
     public static initialize(context: ExtensionContext): void {
