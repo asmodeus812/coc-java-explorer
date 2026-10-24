@@ -135,6 +135,11 @@
                     "description": "Show class members in the project explorer view when a class is expanded",
                     "default": false
                 },
+                "java.dependency.syncWithFolderExplorer": {
+                    "type": "boolean",
+                    "description": "Reveal the file of the active editor in the explorer when the editor changes. Written by the link and unlink with folder explorer commands",
+                    "default": true
+                },
                 "java.dependency.autoRefresh": {
                     "type": "boolean",
                     "description": "Set to true to automatically refresh the tree view when changes to the classpath occur and the view is opened or visible",
