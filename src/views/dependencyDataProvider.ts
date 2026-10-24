@@ -1,9 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { commands, Emitter, Event, ExtensionContext, ProviderResult, TreeDataProvider, TreeItem, window, workspace } from "coc.nvim";
+import { commands, Emitter, Event, ExtensionContext, ProviderResult, TreeDataProvider, TreeItem, TreeItemAction, window, workspace } from "coc.nvim";
 import * as _ from "lodash";
 import { Commands } from "../commands";
+import { deleteFiles } from "../explorerCommands/delete";
+import { newJavaClass, newPackage } from "../explorerCommands/new";
+import { renameFile } from "../explorerCommands/rename";
+import { isMutable } from "../explorerCommands/utility";
 import { Jdtls } from "../java/jdtls";
 import { INodeData, NodeKind } from "../java/nodeData";
 import { languageServerApiManager } from "../languageServerApi/languageServerApiManager";
@@ -83,6 +87,29 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
 
     public getTreeItem(element: ExplorerNode): TreeItem | Promise<TreeItem> {
         return element.getTreeItem();
+    }
+
+    public resolveActions(_item: TreeItem, element: ExplorerNode): TreeItemAction<ExplorerNode>[] {
+        const actions: TreeItemAction<ExplorerNode>[] = [];
+        if (element instanceof DataNode && isMutable(element)) {
+            const kind = element.nodeData.kind;
+            const run = (action: (node: DataNode) => Promise<boolean>, refreshed?: ExplorerNode) =>
+                async (node: ExplorerNode) => {
+                    if (await action(node as DataNode)) {
+                        this.refresh(false, refreshed);
+                    }
+                };
+            if (kind === NodeKind.Package || kind === NodeKind.PackageRoot) {
+                actions.push({ title: "New Java Class", handler: run(newJavaClass, element) });
+                actions.push({ title: "New Package", handler: run(newPackage, element.getParent()) });
+            } else {
+                actions.push({ title: "Rename", handler: run(renameFile, element.getParent()) });
+            }
+            if (kind !== NodeKind.PackageRoot) {
+                actions.push({ title: "Delete", handler: run(deleteFiles, element.getParent()) });
+            }
+        }
+        return actions;
     }
 
     public async getChildren(element?: ExplorerNode): Promise<ExplorerNode[] | undefined | null> {
