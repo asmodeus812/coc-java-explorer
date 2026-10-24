@@ -1,0 +1,315 @@
+*coc-java-explorer.txt*  Java project explorer for coc.nvim
+
+
+                    COC-JAVA-EXPLORER REFERENCE MANUAL
+
+
+Java projects, packages and libraries in a tree            *coc-java-explorer*
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+INTRODUCTION                                         *coc-java-explorer-intro*
+
+coc-java-explorer is a coc.nvim extension that shows the Java projects of the
+workspace in a tree view, the Java Projects view. It provides:
+
+- The project tree: projects, source roots, packages, classes, the JRE and
+  the Maven or Gradle dependencies, and referenced libraries.
+  |coc-java-explorer-tree|
+- A flat and a hierarchical package view. |coc-java-explorer-packages|
+- Tree actions that create classes and packages, rename and delete.
+  |coc-java-explorer-actions|
+- Commands that add and remove referenced libraries.
+  |coc-java-explorer-libraries|
+- Project creation and jar export. |coc-java-explorer-create|
+  |coc-java-explorer-jar|
+- Support for workspaces with several folders.
+  |coc-java-explorer-multiroot|
+
+It needs coc-java, whose language server fills the tree. Installation,
+settings and troubleshooting are in the README of the extension.
+
+coc-java-explorer defines no key mappings and no |<Plug>| mappings. You use
+it through |:CocCommand| and the keys of the coc tree window.
+
+==============================================================================
+OPENING THE VIEW                                      *coc-java-explorer-open*
+
+Open a Java file of the project, then run: >vim
+    :CocCommand java.view.package.revealInProjectExplorer
+<
+The Java Projects view opens in a 40 column window on the right and the
+current file is selected in it, with its parents expanded.
+
+While the view is open and linked to the current file, switching to another
+Java file selects that file in the tree. Link and unlink with: >vim
+    :CocCommand java.view.package.linkWithFolderExplorer
+    :CocCommand java.view.package.unlinkWithFolderExplorer
+<
+The link is on by default and kept in the setting
+`java.dependency.syncWithFolderExplorer`, which the two commands set.
+Unlinked, the tree no longer follows the current file;
+`revealInProjectExplorer` still selects it when you run it.
+
+The tree window uses the keys of coc tree views: `t` expands or collapses a
+node, `<CR>` opens a file or class in the window you came from, `<Tab>` opens
+the actions menu of a node, `M` collapses all nodes and `f` filters the
+lines. These keys are coc settings that start with `tree.key.`.
+
+==============================================================================
+THE PROJECT TREE                                      *coc-java-explorer-tree*
+
+Each Java project of the workspace is a top level node. Under a project you
+find:
+
+- The source roots, such as `src/main/java` and `src/test/java`, with their
+  packages and the classes in them.
+- The JRE of the project.
+- The Maven or Gradle dependencies, for projects built with Maven or Gradle.
+- Referenced Libraries, the jar files you add to a project without a build
+  tool. |coc-java-explorer-libraries|
+- Folders and files that are not Java sources, when non-Java resources are
+  shown (`java.project.explorer.showNonJavaResources`).
+
+Expanding a class shows its members (fields and methods) when
+`java.dependency.showMembers` is on. `<CR>` on a member jumps to it.
+
+While the language server imports the projects, each project appears as its
+import finishes.
+
+When files or the classpath change, the tree refreshes after a short delay
+(`java.dependency.autoRefresh` and `java.dependency.refreshDelay`). Refresh
+it by hand with: >vim
+    :CocCommand java.view.package.refresh
+<
+==============================================================================
+PACKAGE VIEWS                                     *coc-java-explorer-packages*
+
+The flat view lists every package of a source root under its full name, such
+as `com.example.demo.web`. The hierarchical view nests packages by name
+segment: `com`, then `example`, then `demo`. Switch with: >vim
+    :CocCommand java.view.package.changeToFlatPackageView
+    :CocCommand java.view.package.changeToHierarchicalPackageView
+<
+The commands change `java.dependency.packagePresentation` in your settings,
+so the choice is kept for the next session. The default is flat.
+
+==============================================================================
+TREE ACTIONS                                       *coc-java-explorer-actions*
+
+Press `<Tab>` on a node of your own sources to open its actions menu.
+Dependency, JRE and library nodes have no actions.
+
+Action          On                           What it does ~
+New Java Class  package or source root       asks for the class name and
+                                             creates the class there
+New Package     package or source root       asks for the package name,
+                                             such as `com.example.util`,
+                                             and creates it
+Rename          class, file or folder        asks for the new name; a
+                                             class is renamed with its
+                                             references
+Delete          package, class, file or      asks for confirmation, then
+                folder                       deletes it
+
+Class and package names must be Java identifiers, Unicode letters included.
+Keywords and invalid names are rejected with a message.
+|coc-java-explorer-messages|
+
+==============================================================================
+COMMANDS                                          *coc-java-explorer-commands*
+
+Run every command with |:CocCommand|.
+
+Command                                          Does ~
+`java.view.package.revealInProjectExplorer`      open the view and select
+                                                 the current file
+`java.view.package.refresh`                      refresh the tree
+`java.view.package.changeToFlatPackageView`      flat package view
+`java.view.package.changeToHierarchicalPackageView`
+                                                 hierarchical package view
+`java.view.package.linkWithFolderExplorer`       tree follows the current
+                                                 file
+`java.view.package.unlinkWithFolderExplorer`     tree stops following it
+`java.project.explorer.showNonJavaResources`     show non-Java files and
+                                                 folders
+`java.project.explorer.hideNonJavaResources`     hide them
+`java.project.addLibraries`                      add jar files to the
+                                                 project
+`java.project.addLibraryFolders`                 add folders of jar files
+`java.project.removeLibrary`                     exclude referenced
+                                                 libraries
+`java.project.refreshLibraries`                  reload the referenced
+                                                 libraries
+`java.project.create`                            create a new Java project
+`java.view.package.exportJar`                    export a project as a jar
+
+==============================================================================
+REFERENCED LIBRARIES                             *coc-java-explorer-libraries*
+
+A project without a build tool takes its jar files from the coc-java setting
+`java.project.referencedLibraries`; they appear under Referenced Libraries.
+
+Add jar files: >vim
+    :CocCommand java.project.addLibraries
+<
+Type one or more jar paths, separated by commas. Relative paths start at
+the workspace root; `~` and environment variables are expanded. A list of
+the paths and a "Proceed" or "Cancel" choice follow. On "Proceed" the paths
+are added to the setting and shown in a message.
+
+Add every jar under folders: >vim
+    :CocCommand java.project.addLibraryFolders
+<
+Type folder paths or glob patterns the same way; each folder is added as
+`<folder>/**/*.jar`.
+
+Exclude libraries: >vim
+    :CocCommand java.project.removeLibrary
+<
+A list shows every library pattern as Included or Excluded, with the
+excluded ones selected. Select the patterns to exclude and confirm; the rest
+stay included.
+
+Reload the libraries after the jar files change on disk: >vim
+    :CocCommand java.project.refreshLibraries
+<
+==============================================================================
+NEW PROJECTS                                        *coc-java-explorer-create*
+>vim
+    :CocCommand java.project.create
+<
+Pick the project type: Simple, Maven, Gradle or Spring Boot.
+
+- Simple asks for the location, the workspace folder by default, and the
+  project name, then creates a project without a build tool in a new folder
+  there.
+- Maven, Gradle and Spring Boot hand over to the extension that creates such
+  projects. When that extension is missing or too old, a message offers to
+  install or update it; run the command again afterwards.
+
+==============================================================================
+EXPORTING A JAR                                        *coc-java-explorer-jar*
+>vim
+    :CocCommand java.view.package.exportJar
+<
+With several projects you pick the project, then the main class, if there
+is one, and the elements to include. Last you type the output path of the
+jar. A message names the jar when it is written.
+
+==============================================================================
+MULTI-ROOT WORKSPACES                            *coc-java-explorer-multiroot*
+
+With several workspace folders the tree lists every Java project once, also
+when a project lies inside more than one folder.
+
+Workspace folders without a Java project depend on
+`java.project.explorer.showNonJavaResources`:
+
+- Off, the default: they are hidden.
+- On: they appear as plain folders that you can browse and open files from.
+
+Toggle it for the workspace with: >vim
+    :CocCommand java.project.explorer.showNonJavaResources
+    :CocCommand java.project.explorer.hideNonJavaResources
+<
+The commands write the setting to the workspace settings.
+
+==============================================================================
+MESSAGES                                          *coc-java-explorer-messages*
+
+"Please install the coc-java extension first"
+    coc-java is not installed. Install it and restart Neovim.
+
+"Please update coc-java extension to latest version"
+    coc-java is too old to serve the tree. Update it.
+
+"Unable to resolve the currently active document"
+    `revealInProjectExplorer` ran without a current file. Open a Java file
+    and run it again.
+
+Tree actions:
+
+"Keyword '<name>' cannot be used."
+    A part of the class or package name is a Java keyword.
+
+"Invalid Java qualified name."
+    The name is not a valid Java name. Use letters, digits, `_` and `$`,
+    not starting with a digit; separate packages with dots.
+
+"Java file <Name>.java already exists."
+"Package <name> already exists."
+"'<name>' already exists."
+    The target of New Java Class, New Package or Rename exists. Pick
+    another name.
+
+"Are you sure you want to delete '<name>'?"
+    Delete asks this first. Nothing is deleted unless you confirm.
+
+"Failed to delete '<path>': <reason>"
+    The file system refused the delete, for example for lack of
+    permission.
+
+Referenced libraries:
+
+"Canceled adding library resources"
+    You chose "Cancel"; nothing was added.
+
+"Confirming new library resources"
+    You chose "Proceed"; the paths are being added.
+
+`["lib/**/*.jar"]`
+    The patterns just added, as a list.
+
+"No referenced library patterns found."
+    `removeLibrary` found no library patterns in the setting.
+
+"Updating referenced libraries"
+    `removeLibrary` is writing the new include and exclude lists.
+
+"Refreshing <uri> libraries"
+    `refreshLibraries` is reloading the libraries of the workspace folder
+    with that URI.
+
+"Unable to resolve current workspace folder"
+    No workspace folder is open. Open a file of the project first.
+
+New projects:
+
+"Invalid project location was provided"
+    The location is empty or does not exist. Create the folder or type an
+    existing one.
+
+"Invalid project name was provided"
+    The name was left empty.
+
+"Created a new simple project at <path>"
+    The Simple project was created.
+
+"<extension> is required to create <type> projects. Please re-run the
+command after the extension is installed."
+    Choose "Install", then run `java.project.create` again.
+
+"<extension> needs to be updated to create <type> projects. Please re-run
+the command after the extension is updated."
+    Choose "Update", then run `java.project.create` again.
+
+Any other error while creating the project is shown with its reason.
+
+Jar export:
+
+"Exported jar archive to <path>"
+    The jar was written.
+
+"Export jar command has failed."
+    The language server could not write the jar. Check the output path and
+    that the project builds.
+
+"Exporting jar failed or canceled"
+    The export stopped, because a step failed or you canceled a prompt.
+
+Warnings that the language server reports during the export are shown as
+they come.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

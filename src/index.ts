@@ -10,8 +10,10 @@ import { Commands } from "./commands";
 import { LibraryController } from "./controllers/libraryController";
 import { ProjectController } from "./controllers/projectController";
 import { getJavaExtension } from "./utils/Client";
+import { registerHelp } from "./help";
 
 export async function activate(context: ExtensionContext): Promise<void> {
+    registerHelp(context).catch((error) => console.error(`Unable to register the help page: ${error}`));
     await activateExtension(context);
     addExtensionChangeListener(context);
 }
