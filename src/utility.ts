@@ -133,7 +133,7 @@ export function isKeyword(identifier: string): boolean {
     return keywords.has(identifier);
 }
 
-const identifierRegExp: RegExp = /^([a-zA-Z_$][a-zA-Z\d_$]*)$/;
+const identifierRegExp: RegExp = /^[\p{L}\p{Nl}_$][\p{L}\p{Nl}\p{Nd}\p{Mn}\p{Mc}\p{Pc}_$\u200c\u200d]*$/u;
 export function isJavaIdentifier(identifier: string): boolean {
     return identifierRegExp.test(identifier);
 }
