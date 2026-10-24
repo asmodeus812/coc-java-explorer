@@ -10,7 +10,7 @@ import { Jdtls } from "../java/jdtls";
 import { Settings } from "../settings";
 import { Utility } from "../utility";
 import minimatch = require("minimatch");
-import { normalize } from "path";
+import { normalize, resolve } from "path";
 
 const isMac = platform() === "darwin";
 
@@ -36,10 +36,10 @@ export class LibraryController implements Disposable {
         const parts = input
             .split(",")
             .map((s) => s.trim())
-            .map((s) => normalize(s))
-            .filter(Boolean);
+            .filter(Boolean)
+            .map((s) => normalize(resolve(workspace.root, workspace.expand(s))));
         if (parts.length === 0) return;
-        return parts.map((p) => Uri.parse(p));
+        return parts.map((p) => Uri.file(p));
     }
 
     private async confirmAndPick(list: Uri[], title: string): Promise<boolean> {
