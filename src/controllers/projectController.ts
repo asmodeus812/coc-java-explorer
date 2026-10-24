@@ -138,7 +138,8 @@ async function promptUpdateExtension(projectType: string, metaData: IProjectType
 async function scaffoldSimpleProject(context: ExtensionContext): Promise<void> {
     const workspaceFolder = Utility.getDefaultWorkspaceFolder();
     const uri: Uri = Uri.parse(workspaceFolder?.uri);
-    const location: string | undefined = await window.requestInput("Select project location: ", uri.fsPath, {});
+    const input: string | undefined = await window.requestInput("Select project location: ", uri.fsPath, {});
+    const location: string | undefined = input ? workspace.expand(input) : input;
 
     if (!location || !location.length || !(await fse.exists(location))) {
         window.showErrorMessage("Invalid project location was provided");
