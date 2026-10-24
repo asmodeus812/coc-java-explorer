@@ -11,6 +11,8 @@ import { getJavaExtension, getJavaExtensionApi } from "../utils/Client";
 class LanguageServerApiManager {
     private extensionApi: any;
     private isServerReady: boolean = false;
+    private isServerRunning: boolean = false;
+    private serverReadyWaitStarted: boolean = false;
     private context: ExtensionContext;
 
     public initialize(context: ExtensionContext) {
@@ -31,9 +33,35 @@ class LanguageServerApiManager {
             return false;
         }
 
-        await this.extensionApi.serverReady();
-        this.isServerReady = true;
+        this.startServerReadyWait();
+        if (!this.isServerRunning) {
+            if (this.extensionApi.serverRunning) {
+                // jdtls answers queries once it runs; projects arrive progressively while it imports
+                await this.extensionApi.serverRunning();
+                this.isServerRunning = true;
+            } else {
+                await this.extensionApi.serverReady();
+                this.isServerReady = true;
+            }
+        }
         return true;
+    }
+
+    public isFullyReady(): boolean {
+        return this.isServerReady;
+    }
+
+    private startServerReadyWait(): void {
+        if (!this.serverReadyWaitStarted && !this.isServerReady && this.extensionApi?.serverReady) {
+            this.serverReadyWaitStarted = true;
+            this.extensionApi
+                .serverReady()
+                .then(() => {
+                    this.isServerReady = true;
+                    commands.executeCommand(Commands.VIEW_PACKAGE_INTERNAL_REFRESH, /* debounce = */ false);
+                })
+                .catch(() => undefined);
+        }
     }
 
     public async initializeJavaLanguageServerApis(): Promise<void> {
@@ -53,8 +81,12 @@ class LanguageServerApiManager {
             if (extensionApi.onDidClasspathUpdate) {
                 const onDidClasspathUpdate: Event<Uri> = extensionApi.onDidClasspathUpdate;
                 this.context.subscriptions.push(
-                    onDidClasspathUpdate(() => {
-                        commands.executeCommand(Commands.VIEW_PACKAGE_INTERNAL_REFRESH, /* debounce = */ true);
+                    onDidClasspathUpdate((uri: Uri) => {
+                        if (this.isServerReady) {
+                            commands.executeCommand(Commands.VIEW_PACKAGE_INTERNAL_REFRESH, /* debounce = */ true);
+                        } else {
+                            commands.executeCommand(Commands.VIEW_PACKAGE_INTERNAL_ADD_PROJECTS, [uri.toString()]);
+                        }
                         syncHandler.updateFileWatcher(Settings.autoRefresh());
                     })
                 );
@@ -63,8 +95,10 @@ class LanguageServerApiManager {
             if (extensionApi.onDidProjectsImport) {
                 const onDidProjectsImport: Event<Uri[]> = extensionApi.onDidProjectsImport;
                 this.context.subscriptions.push(
-                    onDidProjectsImport(() => {
-                        commands.executeCommand(Commands.VIEW_PACKAGE_INTERNAL_REFRESH, /* debounce = */ true);
+                    onDidProjectsImport((uris: Uri[]) => {
+                        // jdtls is blocked while importing, add the imported projects from the notification itself
+                        this.isServerRunning = true;
+                        commands.executeCommand(Commands.VIEW_PACKAGE_INTERNAL_ADD_PROJECTS, uris.map((u) => u.toString()));
                         syncHandler.updateFileWatcher(Settings.autoRefresh());
                     })
                 );

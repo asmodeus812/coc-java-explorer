@@ -27,6 +27,9 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
     public onDidChangeTreeData: Event<ExplorerNode | null | undefined> = this._onDidChangeTreeData.event;
 
     private _rootItems: ExplorerNode[] | undefined = undefined;
+    /** Resolved when the first batch of progressive projects arrives. */
+    private _progressiveItemsReady: Promise<void> | undefined;
+    private _resolveProgressiveItems: (() => void) | undefined;
     private _refreshDelayTrigger: _.DebouncedFunc<(element?: ExplorerNode) => void>;
     /**
      * The element which is pending to be refreshed.
@@ -46,6 +49,9 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
             ),
             commands.registerCommand(Commands.VIEW_PACKAGE_REFRESH, (debounce?: boolean, element?: ExplorerNode) =>
                 this.refresh(debounce, element)
+            ),
+            commands.registerCommand(Commands.VIEW_PACKAGE_INTERNAL_ADD_PROJECTS, (projectUris: string[]) =>
+                this.addProgressiveProjects(projectUris)
             ),
             commands.registerCommand(Commands.VIEW_PACKAGE_EXPORT_JAR, async () => {
                 executeExportJarTask();
@@ -117,6 +123,19 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
             return [];
         }
 
+        if (!element && !languageServerApiManager.isFullyReady()) {
+            if (!this._rootItems?.length) {
+                if (!this._progressiveItemsReady) {
+                    this._progressiveItemsReady = new Promise<void>((resolve) => {
+                        this._resolveProgressiveItems = resolve;
+                    });
+                }
+                await this._progressiveItemsReady;
+            }
+            explorerNodeCache.saveNodes(this._rootItems || []);
+            return this._rootItems || [];
+        }
+
         const children = !this._rootItems || !element ? await this.getRootNodes() : await element.getChildren();
 
         explorerNodeCache.saveNodes(children || []);
@@ -161,6 +180,44 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
         explorerNodeCache.removeNodeChildren(element);
         this._onDidChangeTreeData.fire(element);
         this.pendingRefreshElement = null;
+        this.resolveProgressiveItems();
+    }
+
+    /**
+     * Add projects progressively from the ProjectsImported notifications. The project nodes are created from the uris
+     * directly, without querying jdtls, which may be blocked during a long running import.
+     */
+    public addProgressiveProjects(projectUris: string[]): void {
+        const folders = workspace.workspaceFolders;
+        if (folders?.length) {
+            if (!this._rootItems) {
+                this._rootItems = [];
+            }
+            const existingUris = new Set(
+                this._rootItems.filter((n): n is ProjectNode => n instanceof ProjectNode).map((n) => n.uri)
+            );
+            let added = false;
+            for (const uriStr of projectUris) {
+                if (!existingUris.has(uriStr)) {
+                    const name = uriStr.replace(/\/+$/, "").split("/").pop() || "unknown";
+                    this._rootItems.push(new ProjectNode({ name, uri: uriStr, kind: NodeKind.Project }, undefined));
+                    existingUris.add(uriStr);
+                    added = true;
+                }
+            }
+            if (added) {
+                this.resolveProgressiveItems();
+                this._onDidChangeTreeData.fire(undefined);
+            }
+        }
+    }
+
+    private resolveProgressiveItems(): void {
+        if (this._resolveProgressiveItems) {
+            this._resolveProgressiveItems();
+            this._resolveProgressiveItems = undefined;
+            this._progressiveItemsReady = undefined;
+        }
     }
 
     private async getRootNodes(): Promise<ExplorerNode[]> {
