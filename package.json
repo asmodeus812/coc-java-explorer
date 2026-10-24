@@ -82,15 +82,19 @@
                 "title": "Refresh project libraries"
             },
             {
+                "command": "java.project.removeLibrary",
+                "title": "Exclude referenced libraries from project"
+            },
+            {
                 "command": "java.project.create",
                 "title": "Create a new Java project"
             },
             {
-                "command": "java.view.package.linkWithFolder",
+                "command": "java.view.package.linkWithFolderExplorer",
                 "title": "Link package view with folder"
             },
             {
-                "command": "java.view.package.unlinkWithFolder",
+                "command": "java.view.package.unlinkWithFolderExplorer",
                 "title": "Unlink package view from folder"
             },
             {
@@ -102,10 +106,6 @@
                 "title": "Show package view as hierarchical view"
             },
             {
-                "command": "java.view.package.internalRefresh",
-                "title": "Internal refresh of package view"
-            },
-            {
                 "command": "java.view.package.refresh",
                 "title": "Refresh project & packages in view"
             },
@@ -114,15 +114,15 @@
                 "title": "Export project jar file"
             },
             {
-                "command": "java.view.package.revealProject",
-                "title": "Reveal project in project view"
+                "command": "java.view.package.revealInProjectExplorer",
+                "title": "Reveal the current file in the project view"
             },
             {
-                "command": "java.view.explorer.showNonJavaResources",
+                "command": "java.project.explorer.showNonJavaResources",
                 "title": "Show non-Java resources in view"
             },
             {
-                "command": "java.view.explorer.hideNonJavaResources",
+                "command": "java.project.explorer.hideNonJavaResources",
                 "title": "Hide non-Java resources in view"
             }
         ],
