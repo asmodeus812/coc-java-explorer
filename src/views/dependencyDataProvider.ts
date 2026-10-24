@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { commands, Emitter, Event, ExtensionContext, ProviderResult, TreeDataProvider, TreeItem, TreeItemAction, window, workspace } from "coc.nvim";
+import { commands, Emitter, Event, ExtensionContext, ProviderResult, TreeDataProvider, TreeItem, TreeItemAction, Uri, window, workspace } from "coc.nvim";
 import * as _ from "lodash";
+import * as path from "path";
 import { Commands } from "../commands";
 import { deleteFiles } from "../explorerCommands/delete";
 import { newJavaClass, newPackage } from "../explorerCommands/new";
@@ -189,19 +190,25 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
      */
     public addProgressiveProjects(projectUris: string[]): void {
         const folders = workspace.workspaceFolders;
-        if (folders?.length) {
+        // multi-root trees group the projects under workspace nodes, root level project nodes would duplicate them
+        if (folders?.length === 1 && !this._rootItems?.some((root) => root instanceof WorkspaceNode)) {
             if (!this._rootItems) {
                 this._rootItems = [];
             }
             const existingUris = new Set(
-                this._rootItems.filter((n): n is ProjectNode => n instanceof ProjectNode).map((n) => n.uri)
+                this._rootItems
+                    .filter((n): n is ProjectNode => n instanceof ProjectNode)
+                    .map((n) => n.uri)
+                    .filter((uri): uri is string => Boolean(uri))
+                    .map(getProjectUriKey)
             );
             let added = false;
             for (const uriStr of projectUris) {
-                if (!existingUris.has(uriStr)) {
+                const uriKey = getProjectUriKey(uriStr);
+                if (!existingUris.has(uriKey)) {
                     const name = uriStr.replace(/\/+$/, "").split("/").pop() || "unknown";
                     this._rootItems.push(new ProjectNode({ name, uri: uriStr, kind: NodeKind.Project }, undefined));
-                    existingUris.add(uriStr);
+                    existingUris.add(uriKey);
                     added = true;
                 }
             }
@@ -263,4 +270,17 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
             explorerLock.release();
         }
     }
+}
+
+function getProjectUriKey(uriString: string): string {
+    const uri = Uri.parse(uriString);
+    let key = uri.toString();
+    if (uri.scheme === "file") {
+        let fsPath = path.normalize(uri.fsPath);
+        if (fsPath !== path.parse(fsPath).root) {
+            fsPath = fsPath.replace(/[\\/]+$/, "");
+        }
+        key = process.platform === "win32" ? fsPath.toLowerCase() : fsPath;
+    }
+    return key;
 }

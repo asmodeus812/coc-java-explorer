@@ -64,6 +64,15 @@ class LanguageServerApiManager {
         }
     }
 
+    private refreshOrAddProjects(projectUris: Uri[]): void {
+        if (this.isServerReady) {
+            commands.executeCommand(Commands.VIEW_PACKAGE_INTERNAL_REFRESH, /* debounce = */ true);
+        } else {
+            // jdtls is blocked while importing, add the imported projects from the notification itself
+            commands.executeCommand(Commands.VIEW_PACKAGE_INTERNAL_ADD_PROJECTS, projectUris.map((u) => u.toString()));
+        }
+    }
+
     public async initializeJavaLanguageServerApis(): Promise<void> {
         if (this.isApiInitialized()) {
             return;
@@ -82,11 +91,7 @@ class LanguageServerApiManager {
                 const onDidClasspathUpdate: Event<Uri> = extensionApi.onDidClasspathUpdate;
                 this.context.subscriptions.push(
                     onDidClasspathUpdate((uri: Uri) => {
-                        if (this.isServerReady) {
-                            commands.executeCommand(Commands.VIEW_PACKAGE_INTERNAL_REFRESH, /* debounce = */ true);
-                        } else {
-                            commands.executeCommand(Commands.VIEW_PACKAGE_INTERNAL_ADD_PROJECTS, [uri.toString()]);
-                        }
+                        this.refreshOrAddProjects([uri]);
                         syncHandler.updateFileWatcher(Settings.autoRefresh());
                     })
                 );
@@ -96,9 +101,8 @@ class LanguageServerApiManager {
                 const onDidProjectsImport: Event<Uri[]> = extensionApi.onDidProjectsImport;
                 this.context.subscriptions.push(
                     onDidProjectsImport((uris: Uri[]) => {
-                        // jdtls is blocked while importing, add the imported projects from the notification itself
                         this.isServerRunning = true;
-                        commands.executeCommand(Commands.VIEW_PACKAGE_INTERNAL_ADD_PROJECTS, uris.map((u) => u.toString()));
+                        this.refreshOrAddProjects(uris);
                         syncHandler.updateFileWatcher(Settings.autoRefresh());
                     })
                 );
