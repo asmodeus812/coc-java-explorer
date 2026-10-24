@@ -158,20 +158,20 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
         return project?.revealPaths(paths);
     }
 
-    public async getRootProjects(): Promise<ExplorerNode[]> {
+    public async getRootProjects(): Promise<ProjectNode[]> {
         const rootElements = await this.getRootNodes();
+        let result: ProjectNode[] = [];
         if (rootElements[0] instanceof ProjectNode) {
-            return rootElements;
+            result = rootElements.filter(isProjectNode);
         } else {
-            let result: ExplorerNode[] = [];
             for (const rootWorkspace of rootElements) {
                 const projects = await rootWorkspace.getChildren();
                 if (projects) {
-                    result = result.concat(projects);
+                    result = result.concat(projects.filter(isProjectNode));
                 }
             }
-            return result;
         }
+        return result;
     }
 
     private doRefresh(element?: ExplorerNode): void {
@@ -197,7 +197,7 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
             }
             const existingUris = new Set(
                 this._rootItems
-                    .filter((n): n is ProjectNode => n instanceof ProjectNode)
+                    .filter(isProjectNode)
                     .map((n) => n.uri)
                     .filter((uri): uri is string => Boolean(uri))
                     .map(getProjectUriKey)
@@ -244,18 +244,17 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
             const folders = workspace.workspaceFolders;
             if (folders?.length) {
                 if (folders.length > 1) {
-                    folders.forEach((folder) =>
-                        rootItems.push(
-                            new WorkspaceNode(
-                                {
-                                    name: folder.name,
-                                    uri: folder.uri.toString(),
-                                    kind: NodeKind.Workspace
-                                },
-                                undefined
-                            )
-                        )
-                    );
+                    const javaProjectsByFolder = Settings.nonJavaResourcesFiltered()
+                        ? await Promise.all(folders.map((folder) => Jdtls.getProjects(folder.uri.toString())))
+                        : undefined;
+                    folders.forEach((folder, index) => {
+                        // java only mode leaves no empty non-java workspace roots in the tree
+                        if (!javaProjectsByFolder || javaProjectsByFolder[index].length > 0) {
+                            rootItems.push(
+                                new WorkspaceNode({ name: folder.name, uri: folder.uri.toString(), kind: NodeKind.Workspace }, undefined)
+                            );
+                        }
+                    });
                     this._rootItems = rootItems;
                 } else {
                     const result: INodeData[] = await Jdtls.getProjects(folders[0].uri.toString());
@@ -283,4 +282,8 @@ function getProjectUriKey(uriString: string): string {
         key = process.platform === "win32" ? fsPath.toLowerCase() : fsPath;
     }
     return key;
+}
+
+function isProjectNode(node: ExplorerNode): node is ProjectNode {
+    return node instanceof ProjectNode;
 }

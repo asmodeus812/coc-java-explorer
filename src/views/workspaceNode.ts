@@ -3,7 +3,10 @@
 
 import {Explorer} from "../constants";
 import {Jdtls} from "../java/jdtls";
-import {INodeData} from "../java/nodeData";
+import {Uri} from "coc.nvim";
+import {INodeData, NodeKind} from "../java/nodeData";
+import {Settings} from "../settings";
+import {createWorkspaceResourceNode, getWorkspaceResourceData} from "./workspaceResourceFolderNode";
 import {DataNode} from "./dataNode";
 import {ExplorerNode} from "./explorerNode";
 import {NodeFactory} from "./nodeFactory";
@@ -18,14 +21,26 @@ export class WorkspaceNode extends DataNode {
         if (!this.nodeData.uri) {
             return undefined;
         }
-        return Jdtls.getProjects(this.nodeData.uri);
+        const projects = await Jdtls.getProjects(this.nodeData.uri);
+        let result: INodeData[] = projects;
+        if (!projects.length && !Settings.nonJavaResourcesFiltered()) {
+            // a root without java projects shows its plain files and folders instead of an empty entry
+            const workspaceUri = Uri.parse(this.nodeData.uri);
+            result = await getWorkspaceResourceData(workspaceUri, workspaceUri);
+        }
+        return result;
     }
 
     protected createChildNodeList(): ExplorerNode[] {
         const result: (ExplorerNode | undefined)[] = [];
+        const workspaceUri = this.uri ? Uri.parse(this.uri) : undefined;
         if (this.nodeData?.children?.length) {
             this.nodeData.children.forEach((nodeData) => {
-                result.push(NodeFactory.createNode(nodeData, this));
+                if (workspaceUri && (nodeData.kind === NodeKind.Folder || nodeData.kind === NodeKind.File)) {
+                    result.push(createWorkspaceResourceNode(nodeData, this, workspaceUri));
+                } else {
+                    result.push(NodeFactory.createNode(nodeData, this));
+                }
             });
         }
         return result.filter(<T>(n?: T): n is T => Boolean(n));

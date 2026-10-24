@@ -14,6 +14,8 @@ export namespace Context {
 export namespace Explorer {
     export enum ContextValueType {
         WorkspaceFolder = "workspaceFolder",
+        WorkspaceResourceFile = "workspaceResourceFile",
+        WorkspaceResourceFolder = "workspaceResourceFolder",
         Project = "project",
         Container = "container",
         PackageRoot = "packageRoot",

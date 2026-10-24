@@ -156,7 +156,7 @@
                 },
                 "java.project.explorer.showNonJavaResources": {
                     "type": "boolean",
-                    "description": "Show non java related file system resources such as folders or files",
+                    "description": "Show non java related file system resources such as folders or files, and browse workspace folders without java projects. When disabled, workspace folders without java projects are hidden",
                     "default": false
                 }
             }
