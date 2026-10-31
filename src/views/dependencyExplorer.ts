@@ -36,6 +36,10 @@ export class DependencyExplorer implements Disposable {
         return this._instance;
     }
 
+    public static isVisible(): boolean {
+        return this._instance?._dependencyViewer?.visible === true;
+    }
+
     private static _instance: DependencyExplorer;
 
     private _dependencyViewer: TreeView<ExplorerNode>;
@@ -121,6 +125,12 @@ export class DependencyExplorer implements Disposable {
             }
 
             if (!(await Utility.isRevealable(uri))) {
+                if (!needCheckSyncSetting) {
+                    const inWorkspace = uri.scheme !== "file" || workspace.getWorkspaceFolder(uri) !== undefined;
+                    void window.showWarningMessage(
+                        inWorkspace ? "The Java language server is not ready" : "The current file is not in a Java workspace folder"
+                    );
+                }
                 return;
             }
 
@@ -133,6 +143,9 @@ export class DependencyExplorer implements Disposable {
             }
 
             if (!node) {
+                if (!needCheckSyncSetting) {
+                    void window.showWarningMessage("The current file is not in the project explorer");
+                }
                 return;
             }
 

@@ -51,9 +51,10 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
                 undefined,
                 true
             ),
-            commands.registerCommand(Commands.VIEW_PACKAGE_REFRESH, (debounce?: boolean, element?: ExplorerNode) =>
-                this.refresh(debounce, element)
-            ),
+            commands.registerCommand(Commands.VIEW_PACKAGE_REFRESH, (debounce?: boolean, element?: ExplorerNode) => {
+                this.refresh(debounce, element);
+                Settings.noticeWhenHidden("Project explorer refreshed");
+            }),
             commands.registerCommand(
                 Commands.VIEW_PACKAGE_INTERNAL_ADD_PROJECTS,
                 (projectUris: string[]) => this.addProgressiveProjects(projectUris),

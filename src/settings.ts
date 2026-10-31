@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { commands, ConfigurationChangeEvent, ConfigurationTarget, ExtensionContext, workspace } from "coc.nvim";
+import { commands, ConfigurationChangeEvent, ConfigurationTarget, ExtensionContext, window, workspace } from "coc.nvim";
 import { Commands } from "./commands";
 import { syncHandler } from "./syncHandler";
 import { DependencyExplorer } from "./views/dependencyExplorer";
@@ -42,24 +42,39 @@ export class Settings {
         );
     }
 
+    /**
+     * Tell the user the new state of a view toggle, only while the explorer is hidden:
+     * a visible explorer redraws, which is the feedback.
+     */
+    public static noticeWhenHidden(message: string): void {
+        if (!DependencyExplorer.isVisible()) {
+            void window.showInformationMessage(message);
+        }
+    }
+
     public static linkWithFolderCommand(): void {
         workspace.getConfiguration("java.dependency").update("syncWithFolderExplorer", true, false);
+        Settings.noticeWhenHidden("Link with the current file: on");
     }
 
     public static unlinkWithFolderCommand(): void {
         workspace.getConfiguration("java.dependency").update("syncWithFolderExplorer", false, false);
+        Settings.noticeWhenHidden("Link with the current file: off");
     }
 
     public static changeToFlatPackageView(): void {
         workspace.getConfiguration("java.dependency").update("packagePresentation", PackagePresentation.Flat, false);
+        Settings.noticeWhenHidden("Package view: flat");
     }
 
     public static changeToHierarchicalPackageView(): void {
         workspace.getConfiguration("java.dependency").update("packagePresentation", PackagePresentation.Hierarchical, false);
+        Settings.noticeWhenHidden("Package view: hierarchical");
     }
 
     public static switchNonJavaResourceFilter(enabled: boolean): void {
         workspace.getConfiguration("java.project.explorer").update("showNonJavaResources", enabled, ConfigurationTarget.Workspace);
+        Settings.noticeWhenHidden(enabled ? "Non-Java resources: shown" : "Non-Java resources: hidden");
     }
 
     public static updateReferencedLibraries(libraries: IReferencedLibraries): void {

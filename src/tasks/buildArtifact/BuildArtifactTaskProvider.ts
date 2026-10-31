@@ -13,7 +13,11 @@ let isExportingJar: boolean = false;
 export async function executeExportJarTask(): Promise<void> {
     await saveWorkspaceFiles();
 
-    if (!(await languageServerApiManager.ready()) || isExportingJar) {
+    if (!(await languageServerApiManager.ready())) {
+        void window.showWarningMessage("The Java language server is not ready");
+        return;
+    } else if (isExportingJar) {
+        void window.showWarningMessage("A jar export is already running");
         return;
     }
     isExportingJar = true;

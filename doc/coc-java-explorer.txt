@@ -229,6 +229,27 @@ MESSAGES                                          *coc-java-explorer-messages*
     `revealInProjectExplorer` ran without a current file. Open a Java file
     and run it again.
 
+"The Java language server is not ready"
+    `revealInProjectExplorer` or `exportJar` ran while the server is not
+    running. Wait for it to start, then run the command again.
+
+"The current file is not in a Java workspace folder"
+"The current file is not in the project explorer"
+    `revealInProjectExplorer` found nothing to select for the current file.
+
+"A jar export is already running"
+    `exportJar` was run again before the first export finished.
+
+View toggles, shown only while the explorer is closed (an open explorer
+redraws instead):
+
+"Package view: flat" or "Package view: hierarchical"
+"Non-Java resources: shown" or "Non-Java resources: hidden"
+"Link with the current file: on" or "Link with the current file: off"
+"Project explorer refreshed"
+    The command ran; the setting is changed or the tree reloaded for the
+    next time the explorer opens.
+
 Tree actions:
 
 "Keyword '<name>' cannot be used."
