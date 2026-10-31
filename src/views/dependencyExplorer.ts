@@ -91,7 +91,7 @@ export class DependencyExplorer implements Disposable {
             commands.registerCommand(Commands.JAVA_PROJECT_EXPLORER_RESOURCE_OPEN, async (uri: string, openCommand?: string) => {
                 await nvim.call("win_gotoid", [this._auxWinId]);
                 await workspace.jumpTo(uri, null, openCommand);
-            })
+            }, undefined, true)
         );
 
         context.subscriptions.push(

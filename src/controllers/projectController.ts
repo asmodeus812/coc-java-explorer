@@ -15,14 +15,14 @@ export class ProjectController implements Disposable {
     public constructor(public readonly context: ExtensionContext) {
         context.subscriptions.push(
             commands.registerCommand(Commands.JAVA_PROJECT_CREATE, () => this.createJavaProject()),
-            commands.registerCommand(Commands.JAVA_PROJECT_OPEN, () => this.openJavaProject()),
+            commands.registerCommand(Commands.JAVA_PROJECT_OPEN, () => this.openJavaProject(), undefined, true),
             commands.registerCommand(Commands.INSTALL_EXTENSION, (extensionId: string) => {
                 commands.executeCommand("workbench.extensions.installExtension", extensionId);
                 // So far there is no API to query the extension's state, so we open the extension's homepage
                 // here, where users can check the state: installing, disabled, installed, etc...
                 // See: https://github.com/microsoft/vscode/issues/14444
                 commands.executeCommand("extension.open", extensionId);
-            })
+            }, undefined, true)
         );
     }
 

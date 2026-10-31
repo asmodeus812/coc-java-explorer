@@ -44,15 +44,21 @@ export class DependencyDataProvider implements TreeDataProvider<ExplorerNode> {
             commands.registerCommand(Commands.EXPORT_JAR_REPORT, (terminalId: string, message: string) => {
                 console.error(message);
                 window.showWarningMessage(message);
-            }),
-            commands.registerCommand(Commands.VIEW_PACKAGE_INTERNAL_REFRESH, (debounce?: boolean, element?: ExplorerNode) =>
-                this.refresh(debounce, element)
+            }, undefined, true),
+            commands.registerCommand(
+                Commands.VIEW_PACKAGE_INTERNAL_REFRESH,
+                (debounce?: boolean, element?: ExplorerNode) => this.refresh(debounce, element),
+                undefined,
+                true
             ),
             commands.registerCommand(Commands.VIEW_PACKAGE_REFRESH, (debounce?: boolean, element?: ExplorerNode) =>
                 this.refresh(debounce, element)
             ),
-            commands.registerCommand(Commands.VIEW_PACKAGE_INTERNAL_ADD_PROJECTS, (projectUris: string[]) =>
-                this.addProgressiveProjects(projectUris)
+            commands.registerCommand(
+                Commands.VIEW_PACKAGE_INTERNAL_ADD_PROJECTS,
+                (projectUris: string[]) => this.addProgressiveProjects(projectUris),
+                undefined,
+                true
             ),
             commands.registerCommand(Commands.VIEW_PACKAGE_EXPORT_JAR, async () => {
                 executeExportJarTask();
